@@ -30,9 +30,26 @@ jobs:
       - name: Prepare greeting
         id: morning
         env:
-          REQUESTED_AGENT: ${{ inputs.agent || vars.MORNING_AGENT || 'codex' }}
+          REQUESTED_AGENT: ${{ github.event_name == 'workflow_dispatch' && inputs.agent || vars.MORNING_AGENT || '' }}
+          MORNING_HARD_STOP: ${{ vars.MORNING_HARD_STOP }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
         run: |
+          if [ "$MORNING_HARD_STOP" = "true" ]; then
+            echo "MORNING_HARD_STOP=true; skipping."
+            echo "run_codex=false" >> "$GITHUB_OUTPUT"
+            echo "run_claude=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
           agent="$(printf '%s' "$REQUESTED_AGENT" | tr '[:upper:]' '[:lower:]')"
+          if [ -z "$agent" ]; then
+            echo "MORNING_AGENT is not set; skipping."
+            echo "run_codex=false" >> "$GITHUB_OUTPUT"
+            echo "run_claude=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
           if [ "$agent" != "codex" ] && [ "$agent" != "claude" ] && [ "$agent" != "both" ]; then
             echo "::error::Unsupported MORNING_AGENT '$agent'. Use 'codex', 'claude', or 'both'."
             exit 1
@@ -45,19 +62,35 @@ jobs:
             echo "run=false" >> "$GITHUB_OUTPUT"
           fi
 
-          echo "agent=$agent" >> "$GITHUB_OUTPUT"
+          run_codex=false
+          run_claude=false
+
+          if { [ "$agent" = "codex" ] || [ "$agent" = "both" ]; } && [ -n "$OPENAI_API_KEY" ]; then
+            run_codex=true
+          elif [ "$agent" = "codex" ] || [ "$agent" = "both" ]; then
+            echo "OPENAI_API_KEY is not set; skipping Codex."
+          fi
+
+          if { [ "$agent" = "claude" ] || [ "$agent" = "both" ]; } && [ -n "$ANTHROPIC_API_KEY" ]; then
+            run_claude=true
+          elif [ "$agent" = "claude" ] || [ "$agent" = "both" ]; then
+            echo "ANTHROPIC_API_KEY is not set; skipping Claude."
+          fi
+
+          echo "run_codex=$run_codex" >> "$GITHUB_OUTPUT"
+          echo "run_claude=$run_claude" >> "$GITHUB_OUTPUT"
 
       - name: Greet Codex
-        if: steps.morning.outputs.run == 'true' && (steps.morning.outputs.agent == 'codex' || steps.morning.outputs.agent == 'both')
-        continue-on-error: ${{ steps.morning.outputs.agent == 'both' }}
+        if: steps.morning.outputs.run == 'true' && steps.morning.outputs.run_codex == 'true'
+        continue-on-error: ${{ steps.morning.outputs.run_claude == 'true' }}
         uses: openai/codex-action@v1
         with:
           openai-api-key: ${{ secrets.OPENAI_API_KEY }}
           prompt: Good morning
 
       - name: Greet Claude
-        if: steps.morning.outputs.run == 'true' && (steps.morning.outputs.agent == 'claude' || steps.morning.outputs.agent == 'both')
-        continue-on-error: ${{ steps.morning.outputs.agent == 'both' }}
+        if: steps.morning.outputs.run == 'true' && steps.morning.outputs.run_claude == 'true'
+        continue-on-error: ${{ steps.morning.outputs.run_codex == 'true' }}
         uses: anthropics/claude-code-action@v1
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}

@@ -1,6 +1,6 @@
 # Good Morning
 
-A tiny GitHub Actions workflow that wakes Codex, Claude, or both every morning with one prompt:
+A tiny morning prompt runner for Codex, Claude, or both:
 
 ```text
 Good morning
@@ -8,9 +8,17 @@ Good morning
 
 No repo analysis, no issue creation, no extra instructions.
 
+## Which Setup To Use
+
+If you use a subscription/login-based Codex or Claude plan, use a VPS script instead of GitHub Actions.
+
+GitHub Actions runners do not have your interactive `codex login` or `claude auth` session, so subscription-based CLI auth is the wrong fit there. Run the CLI on your VPS, log in once, and keep that process running in the background.
+
+If you use API keys, use this GitHub Actions workflow.
+
 ## Setup
 
-The workflow can run in three modes:
+The GitHub Actions workflow can run in three modes:
 
 - `codex`
 - `claude`
@@ -26,6 +34,13 @@ Add the matching GitHub secret on the repo's [Actions secrets page](https://gith
 To add a secret: create/copy the API key, click `New repository secret`, use the exact secret name above, paste the key as the value, and save.
 
 Secrets are only for API keys. The manual workflow popup will not show or ask for these secrets; GitHub reads them privately when the workflow runs.
+
+The workflow skips instead of failing when it is not configured:
+
+- If `MORNING_AGENT` is not set for scheduled runs, it skips.
+- If `MORNING_HARD_STOP=true`, it skips.
+- If the selected agent's API key is missing, that agent is skipped.
+- If `both` is selected and only one API key exists, only the configured agent runs.
 
 ## Choosing The Agent
 
@@ -53,7 +68,13 @@ Set `MORNING_AGENT` to:
 - `claude`
 - `both`
 
-If the variable is not set, the workflow defaults to `codex`.
+If the variable is not set, scheduled runs skip. This prevents accidental paid usage.
+
+To hard-stop all scheduled and manual runs without removing keys or variables, set repository variable `MORNING_HARD_STOP` to:
+
+```text
+true
+```
 
 ## Schedule
 
