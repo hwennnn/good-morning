@@ -16,6 +16,44 @@ GitHub Actions runners do not have your interactive `codex login` or `claude aut
 
 If you use API keys, use this GitHub Actions workflow.
 
+## VPS Scripts
+
+For a subscription/login-based plan, copy one of these scripts to your Ubuntu VPS:
+
+- `scripts/good-morning-codex.sh`
+- `scripts/good-morning-claude.sh`
+
+Log in once on the VPS:
+
+```bash
+codex login
+claude auth
+```
+
+Start the background runner:
+
+```bash
+chmod +x scripts/good-morning-codex.sh scripts/good-morning-claude.sh
+scripts/good-morning-codex.sh start
+scripts/good-morning-claude.sh start
+```
+
+Useful commands:
+
+```bash
+scripts/good-morning-codex.sh status
+scripts/good-morning-codex.sh run-now
+scripts/good-morning-codex.sh stop
+tail -f ~/.local/state/good-morning-codex/run.log
+```
+
+To continue the latest local CLI conversation on the VPS instead of starting a fresh one:
+
+```bash
+RESUME_LAST=1 scripts/good-morning-codex.sh start
+RESUME_LAST=1 scripts/good-morning-claude.sh start
+```
+
 ## Setup
 
 The GitHub Actions workflow can run in three modes:
