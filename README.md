@@ -1,19 +1,19 @@
 # Good Morning
 
-A tiny GitHub Actions workflow that starts a daily Codex check-in every morning at 9am Pacific time.
+A tiny GitHub Actions workflow that starts a daily AI-agent check-in every morning at 9am Pacific time.
 
-Codex says good morning, inspects the repository, and opens a GitHub issue with a short summary of anything worth noticing that day.
+Pick Codex or Claude, say good morning, inspect the repository, and open a GitHub issue with a short summary of anything worth noticing that day.
 
 ## What It Does
 
 Every morning, the workflow:
 
-- Runs Codex through the official `openai/codex-action@v1` GitHub Action.
-- Prompts Codex with a lightweight daily check-in.
-- Prevents Codex from modifying files.
-- Creates a GitHub issue containing Codex's response.
+- Runs either Codex or Claude through their native GitHub Actions.
+- Prompts the selected agent with a lightweight daily check-in.
+- Prevents the agent from modifying files.
+- Creates a GitHub issue containing the selected agent's response.
 
-The prompt asks Codex to return:
+The prompt asks the selected agent to return:
 
 - A short good-morning greeting.
 - Anything important to look at today.
@@ -22,14 +22,19 @@ The prompt asks Codex to return:
 
 ## Setup
 
-Add an OpenAI API key as a GitHub Actions secret:
+Add the secret for the agent you want to use:
 
 1. Open the GitHub repository.
 2. Go to `Settings` -> `Secrets and variables` -> `Actions`.
-3. Create a new repository secret named `OPENAI_API_KEY`.
-4. Paste your OpenAI API key as the value.
+3. Add `OPENAI_API_KEY` for Codex.
+4. Add `ANTHROPIC_API_KEY` for Claude.
 
-That is the only required setup.
+For scheduled runs, set an optional repository variable named `MORNING_AGENT`:
+
+- `codex`
+- `claude`
+
+If `MORNING_AGENT` is not set, scheduled runs use `codex`.
 
 ## Schedule
 
@@ -42,26 +47,33 @@ The job then checks `America/Los_Angeles` inside the runner and only continues w
 
 ## Manual Runs
 
-The workflow also supports `workflow_dispatch`, so you can run it manually from the GitHub Actions tab at any time.
+The workflow supports `workflow_dispatch`, so you can run it manually from the GitHub Actions tab at any time.
 
-Manual runs skip the 9am gate and execute immediately.
+Manual runs let you choose:
+
+- `codex`
+- `claude`
+
+You can also pass an optional extra instruction for that run. Manual runs skip the 9am gate and execute immediately.
 
 ## Permissions
 
 The workflow requests:
 
-- `contents: read` so Codex can inspect the repository.
+- `contents: read` so the selected agent can inspect the repository.
 - `issues: write` so the workflow can open the daily check-in issue.
 
-Codex is prompted not to edit files. If you want Codex to make changes later, update the prompt and permissions deliberately.
+The selected agent is prompted not to edit files. If you want the agent to make changes later, update the prompt and permissions deliberately.
 
 ## Customizing
 
-Edit `.github/workflows/codex-morning.yml` to change:
+Edit `.github/prompts/morning-check-in.md` to change the shared morning prompt.
 
-- The morning prompt.
+Edit `.github/workflows/good-morning.yml` to change:
+
+- Agent routing.
 - The issue title.
 - The schedule.
-- Whether Codex reports only or makes changes.
+- Whether the agent reports only or makes changes.
 
-Keep the `OPENAI_API_KEY` secret name in sync with the workflow if you rename it.
+Keep secret and variable names in sync with the workflow if you rename them.

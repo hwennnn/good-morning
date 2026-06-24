@@ -1,0 +1,133 @@
+name: Good morning
+
+on:
+  schedule:
+    # GitHub Actions cron uses UTC.
+    # 16:00 UTC is 9am during Pacific daylight time.
+    # 17:00 UTC is 9am during Pacific standard time.
+    - cron: "0 16 * * *"
+    - cron: "0 17 * * *"
+  workflow_dispatch:
+    inputs:
+      agent:
+        description: "Agent to run"
+        required: true
+        default: "codex"
+        type: choice
+        options:
+          - codex
+          - claude
+      prompt_extra:
+        description: "Optional extra instruction for this run"
+        required: false
+        type: string
+
+jobs:
+  morning:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Prepare run
+        id: morning
+        env:
+          REQUESTED_AGENT: ${{ inputs.agent || vars.MORNING_AGENT || 'codex' }}
+          EXTRA_INSTRUCTION: ${{ inputs.prompt_extra }}
+        run: |
+          agent="$(printf '%s' "$REQUESTED_AGENT" | tr '[:upper:]' '[:lower:]')"
+          if [ "$agent" != "codex" ] && [ "$agent" != "claude" ]; then
+            echo "::error::Unsupported MORNING_AGENT '$agent'. Use 'codex' or 'claude'."
+            exit 1
+          fi
+
+          hour="$(TZ=America/Los_Angeles date +%H)"
+          if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ] || [ "$hour" = "09" ]; then
+            echo "run=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "run=false" >> "$GITHUB_OUTPUT"
+          fi
+
+          echo "agent=$agent" >> "$GITHUB_OUTPUT"
+          echo "date=$(TZ=America/Los_Angeles date +%F)" >> "$GITHUB_OUTPUT"
+
+          {
+            echo "prompt<<EOF"
+            cat .github/prompts/morning-check-in.md
+            if [ -n "$EXTRA_INSTRUCTION" ]; then
+              printf '\n\nExtra instruction:\n%s\n' "$EXTRA_INSTRUCTION"
+            fi
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Run Codex
+        if: steps.morning.outputs.run == 'true' && steps.morning.outputs.agent == 'codex'
+        id: codex
+        uses: openai/codex-action@v1
+        with:
+          openai-api-key: ${{ secrets.OPENAI_API_KEY }}
+          output-file: codex-morning.md
+          prompt: ${{ steps.morning.outputs.prompt }}
+
+      - name: Open Codex daily issue
+        if: steps.morning.outputs.run == 'true' && steps.morning.outputs.agent == 'codex'
+        uses: actions/github-script@v8
+        with:
+          script: |
+            const fs = require("fs");
+            const title = `Codex morning check-in: ${{ steps.morning.outputs.date }}`;
+            const body = fs.readFileSync("codex-morning.md", "utf8");
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title,
+              body
+            });
+
+      - name: Run Claude
+        if: steps.morning.outputs.run == 'true' && steps.morning.outputs.agent == 'claude'
+        id: claude
+        uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          prompt: |
+            ${{ steps.morning.outputs.prompt }}
+
+            For this Claude structured-output run, fill these JSON fields:
+            - greeting
+            - important_today
+            - maintenance
+            - next_action
+          claude_args: |
+            --model claude-sonnet-4-6
+            --max-turns 5
+            --json-schema '{"type":"object","properties":{"greeting":{"type":"string"},"important_today":{"type":"array","items":{"type":"string"}},"maintenance":{"type":"array","items":{"type":"string"}},"next_action":{"type":"string"}},"required":["greeting","important_today","maintenance","next_action"],"additionalProperties":false}'
+
+      - name: Open Claude daily issue
+        if: steps.morning.outputs.run == 'true' && steps.morning.outputs.agent == 'claude'
+        uses: actions/github-script@v8
+        env:
+          CLAUDE_OUTPUT: ${{ steps.claude.outputs.structured_output }}
+        with:
+          script: |
+            const result = JSON.parse(process.env.CLAUDE_OUTPUT || "{}");
+            const lines = [
+              result.greeting || "Good morning.",
+              "",
+              "## Important today",
+              ...(result.important_today || []).map((item) => `- ${item}`),
+              "",
+              "## Maintenance",
+              ...(result.maintenance || []).map((item) => `- ${item}`),
+              "",
+              "## Next action",
+              result.next_action || "- No next action returned."
+            ];
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `Claude morning check-in: ${{ steps.morning.outputs.date }}`,
+              body: lines.join("\n")
+            });
