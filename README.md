@@ -25,9 +25,27 @@ Add the matching GitHub secret on the repo's [Actions secrets page](https://gith
 
 To add a secret: create/copy the API key, click `New repository secret`, use the exact secret name above, paste the key as the value, and save.
 
+Secrets are only for API keys. The manual workflow popup will not show or ask for these secrets; GitHub reads them privately when the workflow runs.
+
 ## Choosing The Agent
 
-Scheduled runs read `MORNING_AGENT` from the repo's [Actions variables page](https://github.com/hwennnn/good-morning/settings/variables/actions).
+There are two ways to choose the agent.
+
+### Manual Runs
+
+Manual runs use the dropdown on the [workflow page](https://github.com/hwennnn/good-morning/actions/workflows/good-morning.yml). Pick:
+
+- `codex`
+- `claude`
+- `both`
+
+This dropdown is not a secret field. It only chooses which agent action to run.
+
+### Scheduled Runs
+
+Scheduled runs read `MORNING_AGENT` from **Repository variables** on the repo's [Actions variables page](https://github.com/hwennnn/good-morning/settings/variables/actions).
+
+Use **Repository variables**, not **Environment variables**.
 
 Set `MORNING_AGENT` to:
 
@@ -36,8 +54,6 @@ Set `MORNING_AGENT` to:
 - `both`
 
 If the variable is not set, the workflow defaults to `codex`.
-
-Manual runs can choose the agent directly from the [workflow page](https://github.com/hwennnn/good-morning/actions/workflows/good-morning.yml).
 
 ## Schedule
 
