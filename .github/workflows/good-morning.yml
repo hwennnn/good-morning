@@ -49,6 +49,7 @@ jobs:
 
       - name: Greet Codex
         if: steps.morning.outputs.run == 'true' && (steps.morning.outputs.agent == 'codex' || steps.morning.outputs.agent == 'both')
+        continue-on-error: ${{ steps.morning.outputs.agent == 'both' }}
         uses: openai/codex-action@v1
         with:
           openai-api-key: ${{ secrets.OPENAI_API_KEY }}
@@ -56,6 +57,7 @@ jobs:
 
       - name: Greet Claude
         if: steps.morning.outputs.run == 'true' && (steps.morning.outputs.agent == 'claude' || steps.morning.outputs.agent == 'both')
+        continue-on-error: ${{ steps.morning.outputs.agent == 'both' }}
         uses: anthropics/claude-code-action@v1
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}

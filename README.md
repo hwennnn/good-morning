@@ -63,3 +63,15 @@ The workflow runs at 9am Pacific. GitHub cron uses UTC, so it schedules both Pac
 - `0 17 * * *` for standard time.
 
 The job checks `America/Los_Angeles` before greeting the agent, so only the real 9am Pacific run activates it.
+
+## Debugging
+
+Open the latest run from the [workflow page](https://github.com/hwennnn/good-morning/actions/workflows/good-morning.yml), then check the `Greet Codex` or `Greet Claude` step.
+
+For Codex:
+
+- `openai-api-key: ***` means GitHub found and passed `OPENAI_API_KEY`.
+- `prompt: Good morning` means the workflow sent the expected prompt.
+- `Quota exceeded` means the OpenAI key was accepted far enough to start Codex, but the OpenAI account/project needs quota or billing fixed.
+
+For Claude, use the same idea: if `anthropic_api_key` is masked as `***`, GitHub found `ANTHROPIC_API_KEY`; any later auth/quota error is from the Anthropic account/key, not from the dropdown.
