@@ -24,7 +24,7 @@ Use the secrets for whichever modes you want to run.
 
 Secrets are stored in the GitHub repository, not in this codebase.
 
-Open the repository on GitHub, then go to:
+Open the repository's [Actions secrets page](https://github.com/hwennnn/good-morning/settings/secrets/actions), then click `New repository secret`.
 
 ```text
 Settings -> Secrets and variables -> Actions -> New repository secret
@@ -32,12 +32,12 @@ Settings -> Secrets and variables -> Actions -> New repository secret
 
 ### Codex Secret
 
-Create an OpenAI API key from the OpenAI dashboard, then add it to GitHub:
+Create an OpenAI API key from the [OpenAI API keys page](https://platform.openai.com/api-keys), then add it to GitHub:
 
-1. Go to the OpenAI API keys page.
+1. Go to [platform.openai.com/api-keys](https://platform.openai.com/api-keys).
 2. Create a new API key.
 3. Copy the key.
-4. In GitHub, create a new repository secret named:
+4. In GitHub, create a new repository secret on the [Actions secrets page](https://github.com/hwennnn/good-morning/settings/secrets/actions) named:
 
 ```text
 OPENAI_API_KEY
@@ -50,12 +50,12 @@ Codex runs only when `OPENAI_API_KEY` exists.
 
 ### Claude Secret
 
-Create an Anthropic API key from the Anthropic Console, then add it to GitHub:
+Create an Anthropic API key from the [Anthropic Console](https://console.anthropic.com/settings/keys), then add it to GitHub:
 
-1. Go to the Anthropic Console.
+1. Go to [console.anthropic.com/settings/keys](https://console.anthropic.com/settings/keys).
 2. Create a new API key.
 3. Copy the key.
-4. In GitHub, create a new repository secret named:
+4. In GitHub, create a new repository secret on the [Actions secrets page](https://github.com/hwennnn/good-morning/settings/secrets/actions) named:
 
 ```text
 ANTHROPIC_API_KEY
@@ -78,7 +78,7 @@ If `MORNING_AGENT` is not set, the workflow uses `codex`.
 
 To set it in GitHub:
 
-1. Go to `Settings` -> `Secrets and variables` -> `Actions`.
+1. Go to the repository's [Actions variables page](https://github.com/hwennnn/good-morning/settings/variables/actions).
 2. Open the `Variables` tab.
 3. Click `New repository variable`.
 4. Name it:
@@ -99,4 +99,4 @@ GitHub Actions uses UTC for cron, so the workflow schedules both Pacific offsets
 
 The job checks `America/Los_Angeles` before greeting the agent, so only the actual 9am Pacific run activates it.
 
-You can also run it manually from the GitHub Actions tab and choose `codex`, `claude`, or `both`.
+You can also run it manually from the [GitHub Actions tab](https://github.com/hwennnn/good-morning/actions/workflows/good-morning.yml) and choose `codex`, `claude`, or `both`.
