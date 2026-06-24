@@ -8,14 +8,54 @@ on:
     - cron: "0 16 * * *"
     - cron: "0 17 * * *"
   workflow_dispatch:
+    inputs:
+      agent:
+        description: "Agent to greet"
+        required: true
+        default: "codex"
+        type: choice
+        options:
+          - codex
+          - claude
 
 jobs:
   morning:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
-      - name: Say good morning
+      - uses: actions/checkout@v5
+
+      - name: Prepare greeting
+        id: morning
+        env:
+          REQUESTED_AGENT: ${{ inputs.agent || vars.MORNING_AGENT || 'codex' }}
         run: |
+          agent="$(printf '%s' "$REQUESTED_AGENT" | tr '[:upper:]' '[:lower:]')"
+          if [ "$agent" != "codex" ] && [ "$agent" != "claude" ]; then
+            echo "::error::Unsupported MORNING_AGENT '$agent'. Use 'codex' or 'claude'."
+            exit 1
+          fi
+
           hour="$(TZ=America/Los_Angeles date +%H)"
           if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ] || [ "$hour" = "09" ]; then
-            echo "Good morning"
+            echo "run=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "run=false" >> "$GITHUB_OUTPUT"
           fi
+
+          echo "agent=$agent" >> "$GITHUB_OUTPUT"
+
+      - name: Greet Codex
+        if: steps.morning.outputs.run == 'true' && steps.morning.outputs.agent == 'codex'
+        uses: openai/codex-action@v1
+        with:
+          openai-api-key: ${{ secrets.OPENAI_API_KEY }}
+          prompt: Good morning
+
+      - name: Greet Claude
+        if: steps.morning.outputs.run == 'true' && steps.morning.outputs.agent == 'claude'
+        uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          prompt: Good morning
