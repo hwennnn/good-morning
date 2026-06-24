@@ -1,102 +1,49 @@
 # Good Morning
 
-A tiny GitHub Actions workflow that greets Codex, Claude, or both every morning.
-
-The entire prompt is:
+A tiny GitHub Actions workflow that wakes Codex, Claude, or both every morning with one prompt:
 
 ```text
 Good morning
 ```
 
-That is it. The point is just to wake up the selected agent sessions.
+No repo analysis, no issue creation, no extra instructions.
 
 ## Setup
 
-The workflow supports three modes:
+The workflow can run in three modes:
 
 - `codex`
 - `claude`
 - `both`
 
-Use the secrets for whichever modes you want to run.
+Add the matching GitHub secret on the repo's [Actions secrets page](https://github.com/hwennnn/good-morning/settings/secrets/actions):
 
-## GitHub Secrets
+| Agent | Secret name | Where to create the key |
+| --- | --- | --- |
+| Codex | `OPENAI_API_KEY` | [OpenAI API keys](https://platform.openai.com/api-keys) |
+| Claude | `ANTHROPIC_API_KEY` | [Anthropic Console keys](https://console.anthropic.com/settings/keys) |
 
-Secrets are stored in the GitHub repository, not in this codebase.
+To add a secret: create/copy the API key, click `New repository secret`, use the exact secret name above, paste the key as the value, and save.
 
-Open the repository's [Actions secrets page](https://github.com/hwennnn/good-morning/settings/secrets/actions), then click `New repository secret`.
+## Choosing The Agent
 
-```text
-Settings -> Secrets and variables -> Actions -> New repository secret
-```
+Scheduled runs read `MORNING_AGENT` from the repo's [Actions variables page](https://github.com/hwennnn/good-morning/settings/variables/actions).
 
-### Codex Secret
-
-Create an OpenAI API key from the [OpenAI API keys page](https://platform.openai.com/api-keys), then add it to GitHub:
-
-1. Go to [platform.openai.com/api-keys](https://platform.openai.com/api-keys).
-2. Create a new API key.
-3. Copy the key.
-4. In GitHub, create a new repository secret on the [Actions secrets page](https://github.com/hwennnn/good-morning/settings/secrets/actions) named:
-
-```text
-OPENAI_API_KEY
-```
-
-5. Paste the OpenAI API key as the secret value.
-6. Save the secret.
-
-Codex runs only when `OPENAI_API_KEY` exists.
-
-### Claude Secret
-
-Create an Anthropic API key from the [Anthropic Console](https://console.anthropic.com/settings/keys), then add it to GitHub:
-
-1. Go to [console.anthropic.com/settings/keys](https://console.anthropic.com/settings/keys).
-2. Create a new API key.
-3. Copy the key.
-4. In GitHub, create a new repository secret on the [Actions secrets page](https://github.com/hwennnn/good-morning/settings/secrets/actions) named:
-
-```text
-ANTHROPIC_API_KEY
-```
-
-5. Paste the Anthropic API key as the secret value.
-6. Save the secret.
-
-Claude runs only when `ANTHROPIC_API_KEY` exists.
-
-## Choosing Agents
-
-Scheduled runs use the repository variable `MORNING_AGENT` when it is set:
+Set `MORNING_AGENT` to:
 
 - `codex`
 - `claude`
 - `both`
 
-If `MORNING_AGENT` is not set, the workflow uses `codex`.
+If the variable is not set, the workflow defaults to `codex`.
 
-To set it in GitHub:
-
-1. Go to the repository's [Actions variables page](https://github.com/hwennnn/good-morning/settings/variables/actions).
-2. Open the `Variables` tab.
-3. Click `New repository variable`.
-4. Name it:
-
-```text
-MORNING_AGENT
-```
-
-5. Set the value to `codex`, `claude`, or `both`.
-6. Save the variable.
+Manual runs can choose the agent directly from the [workflow page](https://github.com/hwennnn/good-morning/actions/workflows/good-morning.yml).
 
 ## Schedule
 
-GitHub Actions uses UTC for cron, so the workflow schedules both Pacific offsets:
+The workflow runs at 9am Pacific. GitHub cron uses UTC, so it schedules both Pacific offsets:
 
-- `0 16 * * *` for 9am Pacific daylight time.
-- `0 17 * * *` for 9am Pacific standard time.
+- `0 16 * * *` for daylight time.
+- `0 17 * * *` for standard time.
 
-The job checks `America/Los_Angeles` before greeting the agent, so only the actual 9am Pacific run activates it.
-
-You can also run it manually from the [GitHub Actions tab](https://github.com/hwennnn/good-morning/actions/workflows/good-morning.yml) and choose `codex`, `claude`, or `both`.
+The job checks `America/Los_Angeles` before greeting the agent, so only the real 9am Pacific run activates it.
