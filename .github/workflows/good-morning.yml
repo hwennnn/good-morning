@@ -17,6 +17,7 @@ on:
         options:
           - codex
           - claude
+          - both
 
 jobs:
   morning:
@@ -32,8 +33,8 @@ jobs:
           REQUESTED_AGENT: ${{ inputs.agent || vars.MORNING_AGENT || 'codex' }}
         run: |
           agent="$(printf '%s' "$REQUESTED_AGENT" | tr '[:upper:]' '[:lower:]')"
-          if [ "$agent" != "codex" ] && [ "$agent" != "claude" ]; then
-            echo "::error::Unsupported MORNING_AGENT '$agent'. Use 'codex' or 'claude'."
+          if [ "$agent" != "codex" ] && [ "$agent" != "claude" ] && [ "$agent" != "both" ]; then
+            echo "::error::Unsupported MORNING_AGENT '$agent'. Use 'codex', 'claude', or 'both'."
             exit 1
           fi
 
@@ -47,14 +48,14 @@ jobs:
           echo "agent=$agent" >> "$GITHUB_OUTPUT"
 
       - name: Greet Codex
-        if: steps.morning.outputs.run == 'true' && steps.morning.outputs.agent == 'codex'
+        if: steps.morning.outputs.run == 'true' && (steps.morning.outputs.agent == 'codex' || steps.morning.outputs.agent == 'both')
         uses: openai/codex-action@v1
         with:
           openai-api-key: ${{ secrets.OPENAI_API_KEY }}
           prompt: Good morning
 
       - name: Greet Claude
-        if: steps.morning.outputs.run == 'true' && steps.morning.outputs.agent == 'claude'
+        if: steps.morning.outputs.run == 'true' && (steps.morning.outputs.agent == 'claude' || steps.morning.outputs.agent == 'both')
         uses: anthropics/claude-code-action@v1
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
